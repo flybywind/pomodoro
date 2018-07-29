@@ -13,9 +13,9 @@ public class Main extends Application {
     static private final Logger LOGGER = Logger.getLogger(Main.class.getName());
     @Override
     public void start(Stage primaryStage) throws Exception{
-        Parent root = FXMLLoader.load(getClass().getResource("../../../main.fxml"));
+        Parent root = FXMLLoader.load(getClass().getResource("main.fxml"));
         primaryStage.setTitle("Pomodoro");
-        primaryStage.setScene(new Scene(root, 1000, 800));
+        primaryStage.setScene(new Scene(root, 600, 510));
         primaryStage.show();
     }
 

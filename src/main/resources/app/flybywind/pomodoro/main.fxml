@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane prefHeight="510.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.flybywind.pomodoro.Controller">
+   <children>
+   </children>
+   <top>
+      <BorderPane prefHeight="55.0" prefWidth="600.0" BorderPane.alignment="CENTER">
+         <left>
+            <Label graphicTextGap="2.0" prefHeight="45.0" prefWidth="114.0" text="请创建：" BorderPane.alignment="CENTER">
+               <font>
+                  <Font size="28.0" />
+               </font>
+            </Label>
+         </left>
+         <center>
+            <TextField fx:id="todoInput" onKeyPressed="#onKeyPressed" prefHeight="32.0" prefWidth="367.0" BorderPane.alignment="CENTER">
+               <font>
+                  <Font size="20.0" />
+               </font>
+            </TextField>
+         </center>
+         <right>
+            <Region prefHeight="49.0" prefWidth="119.0" BorderPane.alignment="CENTER" />
+         </right>
+         <bottom>
+            <Region opacity="0.6" prefHeight="1.0" prefWidth="600.0" style="-fx-background-color: blue;" BorderPane.alignment="CENTER" />
+         </bottom>
+      </BorderPane>
+   </top>
+   <center>
+      <TabPane fx:id="pomodoroTabs" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER" />
+   </center>
+</BorderPane>
