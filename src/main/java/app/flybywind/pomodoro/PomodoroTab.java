@@ -7,10 +7,11 @@ import javafx.geometry.Pos;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
-import javafx.scene.control.RadioButton;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.scene.text.TextAlignment;
 
 import java.util.Queue;
 import java.util.Timer;
@@ -46,12 +47,11 @@ public class PomodoroTab extends BorderPane {
                 new BorderWidths(0, 0, 2, 0))));
         dropDownCommand.getSelectionModel().selectedItemProperty().addListener(((observable, oldValue, newValue) -> {
             if (newValue.equals("暂停")) {
-                stop();
+                end();
             } else if (newValue.equals("结束")) {
-                dropDownCommand.setDisable(true);
-                stop();
+                kill();
             } else if (newValue.equals("重启") || newValue.equals("进行")) {
-                start();
+                begin();
             }
         }));
         isStoped.addListener(((observable, oldValue, newValue) -> {
@@ -69,13 +69,36 @@ public class PomodoroTab extends BorderPane {
         pomodoroListPane.getStyleClass().add("pomodoro-list");
         this.setCenter(pomodoroListPane);
         startOnePomodoro();
+
+        setOnKeyPressed(event -> {
+            // begin
+            if (event.getCode() == KeyCode.B) {
+                if (isStoped.get() > 1) {
+                    begin();
+                }
+            }
+            // end
+            if (event.getCode() == KeyCode.E) {
+                if (isStoped.get() <= 0) {
+                    end();
+                }
+            }
+
+            if (event.getCode() == KeyCode.K) {
+                kill();
+            }
+        });
     }
 
-    public void stop() {
+    public void end() {
         isStoped.setValue(1);
     }
-    public void start() {
+    public void begin() {
         isStoped.setValue(0);
+    }
+    public void kill() {
+        dropDownCommand.setDisable(true);
+        end();
     }
     private void stopLastPomodoro() {
         todoItems.peek().stop();
@@ -102,15 +125,10 @@ public class PomodoroTab extends BorderPane {
             breakProgIndicator.getStyleClass().add("break-indicator");
             breakProgIndicator.setPrefSize(80, 100);
             breakProgIndicator.setPadding(new Insets(20, 0, 0, 0));
-            final RadioButton radioBtn = new RadioButton("pending");
-            radioBtn.selectedProperty().addListener(((observable, oldValue, newValue) -> {
-                if (oldValue == false) {
-                    stop();
-                    radioBtn.setDisable(true);
-                }
-            }));
-
-            grid.add(radioBtn, 0, todoNum);
+            final Label subPomodoro = new Label(String.format("[%2d]%s", todoNum+1, pomodoroName));
+            subPomodoro.setFont(new Font(18));
+            subPomodoro.setTextAlignment(TextAlignment.RIGHT);
+            grid.add(subPomodoro, 0, todoNum);
             grid.add(hbox, 1, todoNum);
             ++todoNum;
             hbox.setSpacing(20);

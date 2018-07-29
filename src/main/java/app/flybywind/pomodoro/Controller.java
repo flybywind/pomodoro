@@ -30,9 +30,9 @@ public class Controller implements Initializable{
         LOGGER.log(Level.INFO, "Url = " + location + ", ResouceBundle = " + resources);
         todoInput.setText("todo1");
         pomodoroTabs.selectionModelProperty().addListener((observable, oldValue, newValue) -> {
-            // stop old tab timer and start new one
-            ((PomodoroTab)oldValue.getSelectedItem().getContent()).stop();
-            ((PomodoroTab)newValue.getSelectedItem().getContent()).start();
+            // end old tab timer and begin new one
+            ((PomodoroTab)oldValue.getSelectedItem().getContent()).end();
+            ((PomodoroTab)newValue.getSelectedItem().getContent()).begin();
         });
     }
     @FXML
@@ -49,6 +49,7 @@ public class Controller implements Initializable{
            } else {
                Tab tab = new Tab(pomodoroName);
                tab.setContent(new ScrollPane(pom));
+
                int pos = tabMap.size();
                tabMap.put(pomodoroName, new Pair<>(pos, tab));
                pomodoroTabs.getTabs().add(tab);
