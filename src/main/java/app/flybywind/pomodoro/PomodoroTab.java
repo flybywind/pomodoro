@@ -1,20 +1,23 @@
 package app.flybywind.pomodoro;
 
-import com.sun.jmx.remote.internal.ArrayQueue;
-import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.RadioButton;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
-import java.util.*;
+import java.util.Queue;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 /**
@@ -22,34 +25,40 @@ import java.util.concurrent.LinkedBlockingQueue;
  * 公用一个番茄map，因为一次只能有一个番茄在计时
  */
 public class PomodoroTab extends BorderPane {
+    final private Logger LOGGER = Logger.getLogger(PomodoroItem.class.getName());
     private String pomodoroName;
-    final static private Label commandLabel;
-    final static private int PomodoroTimeLength = 25*60000; // 25分钟
-    final static private int PomodoroBreakLength = 5*60000; //  5分钟
-    static {
-        commandLabel = new Label("操作");
-        commandLabel.setFont(new Font(20));
-    }
+    final private Label commandLabel;
+    final static private int PomodoroTimeLength = 60000/3; // 25分钟
+    final static private int PomodoroBreakLength = 60000/10; //  5分钟
     private GridPane pomodoroListPane = new GridPane();
     private Queue<PomodoroItem> todoItems = new LinkedBlockingQueue<>();
-    private ListView<String> dropDownCommand = new ListView<>();
+    private ComboBox dropDownCommand = new ComboBox();
     private int todoNum = 0;
     final private IntegerProperty isStoped = new SimpleIntegerProperty(0);
     public PomodoroTab(String name) {
         pomodoroName = name;
-        dropDownCommand.getItems().addAll("暂停", "重启", "结束");
+        commandLabel = new Label("操作");
+        commandLabel.setFont(new Font(20));
+        dropDownCommand.getItems().addAll("进行", "暂停", "重启", "结束");
+        dropDownCommand.getSelectionModel().select(0);
         dropDownCommand.setBorder(new Border(new BorderStroke(
                 Color.GRAY, BorderStrokeStyle.SOLID,null,
                 new BorderWidths(0, 0, 2, 0))));
-        dropDownCommand.setOnMouseClicked(event -> {
-            //todo
-            System.out.println("source = " + event.getSource() + ",\ntarget = " + event.getTarget());
-        });
+        dropDownCommand.getSelectionModel().selectedItemProperty().addListener(((observable, oldValue, newValue) -> {
+            if (newValue.equals("暂停")) {
+                stop();
+            } else if (newValue.equals("结束")) {
+                dropDownCommand.setDisable(true);
+                stop();
+            } else if (newValue.equals("重启") || newValue.equals("进行")) {
+                start();
+            }
+        }));
         isStoped.addListener(((observable, oldValue, newValue) -> {
             if (newValue.doubleValue() > 0) {
-                todoItems.peek().stop();
+                stopLastPomodoro();
             } else {
-                todoItems.add(new PomodoroItem(pomodoroListPane));
+                startOnePomodoro();
             }
         }));
         HBox head = new HBox(commandLabel, dropDownCommand);
@@ -62,24 +71,37 @@ public class PomodoroTab extends BorderPane {
         startOnePomodoro();
     }
 
-    public void stopLastPomodoro() {
+    public void stop() {
+        isStoped.setValue(1);
+    }
+    public void start() {
+        isStoped.setValue(0);
+    }
+    private void stopLastPomodoro() {
         todoItems.peek().stop();
     }
 
-    public void startOnePomodoro() {
+    private void startOnePomodoro() {
         todoItems.add(new PomodoroItem(pomodoroListPane));
     }
     class PomodoroItem {
+        private final Logger LOGGER = Logger.getLogger(PomodoroItem.class.getName());
         final ProgressIndicator pomodoroProgIndicator = new ProgressIndicator(0),
                 breakProgIndicator = new ProgressIndicator(0);
-        DoubleProperty pomodoroTimeProg, breakTimeProg;
+        ScaleDoubleProperty pomodoroTimeProg, breakTimeProg;
         final int TimerInterval = 3000;
         Timer pomodoroTimer = new Timer();
 
         PomodoroItem(GridPane grid) {
             HBox hbox = new HBox(pomodoroProgIndicator, breakProgIndicator);
+            hbox.setSpacing(5);
+            hbox.setAlignment(Pos.CENTER);
+            hbox.setPadding(new Insets(5,5,5,5));
             pomodoroProgIndicator.getStyleClass().add("pomodoro-indicator");
-            pomodoroProgIndicator.getStyleClass().add("break-indicator");
+            pomodoroProgIndicator.setPrefSize(100, 100);
+            breakProgIndicator.getStyleClass().add("break-indicator");
+            breakProgIndicator.setPrefSize(80, 100);
+            breakProgIndicator.setPadding(new Insets(20, 0, 0, 0));
             final RadioButton radioBtn = new RadioButton("pending");
             radioBtn.selectedProperty().addListener(((observable, oldValue, newValue) -> {
                 if (oldValue == false) {
@@ -87,23 +109,25 @@ public class PomodoroTab extends BorderPane {
                     radioBtn.setDisable(true);
                 }
             }));
+
             grid.add(radioBtn, 0, todoNum);
             grid.add(hbox, 1, todoNum);
             ++todoNum;
             hbox.setSpacing(20);
-            pomodoroTimeProg = new SimpleDoubleProperty(0);
-            breakTimeProg = new SimpleDoubleProperty(0);
+            pomodoroTimeProg = new ScaleDoubleProperty(PomodoroTimeLength);
+            breakTimeProg = new ScaleDoubleProperty(PomodoroBreakLength);
             pomodoroProgIndicator.progressProperty().bind(pomodoroTimeProg);
             breakProgIndicator.progressProperty().bind(breakTimeProg);
 
             pomodoroTimer.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
-                    double pomVal =  pomodoroTimeProg.doubleValue();
+                    LOGGER.log(Level.INFO, "pomodoro = " + pomodoroTimeProg.doubleValue() + ", break = " + breakTimeProg);
+                    double pomVal =  pomodoroTimeProg.getRealValue();
                     if (pomVal + TimerInterval >= PomodoroTimeLength) {
                         pomodoroProgIndicator.progressProperty().unbind();
                         pomodoroProgIndicator.setProgress(1);
-                        double breakVal = breakTimeProg.doubleValue();
+                        double breakVal = breakTimeProg.getRealValue();
                         if (breakVal + TimerInterval >= PomodoroBreakLength) {
                             breakProgIndicator.progressProperty().unbind();
                             breakProgIndicator.setProgress(1);
@@ -115,7 +139,7 @@ public class PomodoroTab extends BorderPane {
                         pomodoroTimeProg.setValue(pomVal + TimerInterval);
                     }
                 }
-            }, 0, TimerInterval);
+            }, TimerInterval, TimerInterval);
         }
         void stop() {
             pomodoroProgIndicator.progressProperty().unbind();

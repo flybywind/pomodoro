@@ -1,9 +1,8 @@
 package app.flybywind.pomodoro;
 
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
@@ -11,7 +10,6 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.util.Pair;
 
-import java.awt.event.ActionEvent;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,8 +31,8 @@ public class Controller implements Initializable{
         todoInput.setText("todo1");
         pomodoroTabs.selectionModelProperty().addListener((observable, oldValue, newValue) -> {
             // stop old tab timer and start new one
-            ((PomodoroTab)oldValue.getSelectedItem().getContent()).stopLastPomodoro();
-            ((PomodoroTab)newValue.getSelectedItem().getContent()).startOnePomodoro();
+            ((PomodoroTab)oldValue.getSelectedItem().getContent()).stop();
+            ((PomodoroTab)newValue.getSelectedItem().getContent()).start();
         });
     }
     @FXML
@@ -49,8 +47,8 @@ public class Controller implements Initializable{
                oldTabWithIndex.getValue().setContent(pom);
                pomodoroTabs.getSelectionModel().select(pos);
            } else {
-               Tab tab = new Tab();
-               tab.setContent(pom);
+               Tab tab = new Tab(pomodoroName);
+               tab.setContent(new ScrollPane(pom));
                int pos = tabMap.size();
                tabMap.put(pomodoroName, new Pair<>(pos, tab));
                pomodoroTabs.getTabs().add(tab);
