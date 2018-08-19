@@ -1,5 +1,6 @@
 package app.flybywind.pomodoro;
 
+import app.flybywind.pomodoro.util.Util;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ScrollPane;
@@ -25,14 +26,20 @@ public class Controller implements Initializable{
     @FXML
     private TabPane pomodoroTabs;
     private Map<String, Pair<Integer, Tab>> tabMap = new HashMap<>();
+    private Map<String, PomodoroTab> pomMap = new HashMap<>();
 
     public void initialize(URL location, ResourceBundle resources) {
         LOGGER.log(Level.INFO, "Url = " + location + ", ResouceBundle = " + resources);
         todoInput.setText("todo1");
-        pomodoroTabs.selectionModelProperty().addListener((observable, oldValue, newValue) -> {
+        pomodoroTabs.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             // end old tab timer and begin new one
-            ((PomodoroTab)oldValue.getSelectedItem().getContent()).end();
-            ((PomodoroTab)newValue.getSelectedItem().getContent()).begin();
+            LOGGER.log(Level.INFO, "switch tab between [" + oldValue + "] and [" + newValue + "].");
+            try {
+                (pomMap.get(oldValue.getText())).end();
+                (pomMap.get(newValue.getText())).begin();
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, Util.getFullStackTrace(e));
+            }
         });
     }
     @FXML
@@ -42,12 +49,14 @@ public class Controller implements Initializable{
            LOGGER.log(Level.INFO, "enter pressed, create pomodoro: " + pomodoroName);
            PomodoroTab pom = new PomodoroTab(pomodoroName);
            Pair<Integer, Tab> oldTabWithIndex = tabMap.get(pomodoroName);
+           pomMap.put(pomodoroName, pom);
            if (oldTabWithIndex != null) {
                int pos = oldTabWithIndex.getKey();
                oldTabWithIndex.getValue().setContent(pom);
                pomodoroTabs.getSelectionModel().select(pos);
            } else {
                Tab tab = new Tab(pomodoroName);
+               LOGGER.info("create tab: " + tab);
                tab.setContent(new ScrollPane(pom));
 
                int pos = tabMap.size();

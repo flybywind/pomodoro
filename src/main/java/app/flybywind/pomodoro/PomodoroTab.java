@@ -70,6 +70,7 @@ public class PomodoroTab extends BorderPane {
         this.setCenter(pomodoroListPane);
         startOnePomodoro();
 
+        // todo: no effective
         setOnKeyPressed(event -> {
             // begin
             if (event.getCode() == KeyCode.B) {
@@ -112,7 +113,7 @@ public class PomodoroTab extends BorderPane {
         final ProgressIndicator pomodoroProgIndicator = new ProgressIndicator(0),
                 breakProgIndicator = new ProgressIndicator(0);
         ScaleDoubleProperty pomodoroTimeProg, breakTimeProg;
-        final int TimerInterval = 3000;
+        final int TimerInterval = 1000;
         Timer pomodoroTimer = new Timer();
 
         PomodoroItem(GridPane grid) {
@@ -125,7 +126,7 @@ public class PomodoroTab extends BorderPane {
             breakProgIndicator.getStyleClass().add("break-indicator");
             breakProgIndicator.setPrefSize(80, 100);
             breakProgIndicator.setPadding(new Insets(20, 0, 0, 0));
-            final Label subPomodoro = new Label(String.format("[%2d]%s", todoNum+1, pomodoroName));
+            final Label subPomodoro = new Label(String.format("[%2d]%s: ", todoNum+1, pomodoroName));
             subPomodoro.setFont(new Font(18));
             subPomodoro.setTextAlignment(TextAlignment.RIGHT);
             grid.add(subPomodoro, 0, todoNum);
