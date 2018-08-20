@@ -13,12 +13,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 
-import java.util.Queue;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.IntStream;
 
 
 /**
@@ -31,11 +29,11 @@ public class PomodoroTab extends BorderPane {
     final private Label commandLabel;
     final static private int PomodoroTimeLength = 60000/3; // 25分钟
     final static private int PomodoroBreakLength = 60000/10; //  5分钟
-    private GridPane pomodoroListPane = new GridPane();
-    private Queue<PomodoroItem> todoItems = new LinkedBlockingQueue<>();
+    private Stack<PomodoroItem> todoItems = new Stack<>();
     private ComboBox dropDownCommand = new ComboBox();
-    private int todoNum = 0;
     final private IntegerProperty isStoped = new SimpleIntegerProperty(0);
+
+    final private List<HBox> itemsHbox = new ArrayList<>();
     public PomodoroTab(String name) {
         pomodoroName = name;
         commandLabel = new Label("操作");
@@ -55,6 +53,7 @@ public class PomodoroTab extends BorderPane {
             }
         }));
         isStoped.addListener(((observable, oldValue, newValue) -> {
+            LOGGER.info(pomodoroName +": isStop = " + newValue  + " <-- " + oldValue);
             if (newValue.doubleValue() > 0) {
                 stopLastPomodoro();
             } else {
@@ -64,10 +63,6 @@ public class PomodoroTab extends BorderPane {
         HBox head = new HBox(commandLabel, dropDownCommand);
         head.setSpacing(3);
         this.setTop(head);
-        pomodoroListPane.setVgap(5);
-        pomodoroListPane.setHgap(2);
-        pomodoroListPane.getStyleClass().add("pomodoro-list");
-        this.setCenter(pomodoroListPane);
         startOnePomodoro();
 
         // todo: no effective
@@ -92,9 +87,11 @@ public class PomodoroTab extends BorderPane {
     }
 
     public void end() {
+        LOGGER.info("set pom to end");
         isStoped.setValue(1);
     }
     public void begin() {
+        LOGGER.info("set pom to begin");
         isStoped.setValue(0);
     }
     public void kill() {
@@ -106,7 +103,16 @@ public class PomodoroTab extends BorderPane {
     }
 
     private void startOnePomodoro() {
-        todoItems.add(new PomodoroItem(pomodoroListPane));
+        GridPane pomodoroListPane = reInitGrid();
+        todoItems.push(new PomodoroItem(pomodoroListPane));
+    }
+    private GridPane reInitGrid() {
+        GridPane pomodoroListPane = new GridPane();
+        pomodoroListPane.setVgap(5);
+        pomodoroListPane.setHgap(2);
+        pomodoroListPane.getStyleClass().add("pomodoro-list");
+        this.setCenter(pomodoroListPane);
+        return pomodoroListPane;
     }
     class PomodoroItem {
         private final Logger LOGGER = Logger.getLogger(PomodoroItem.class.getName());
@@ -117,22 +123,29 @@ public class PomodoroTab extends BorderPane {
         Timer pomodoroTimer = new Timer();
 
         PomodoroItem(GridPane grid) {
-            HBox hbox = new HBox(pomodoroProgIndicator, breakProgIndicator);
+            final int todoNum = itemsHbox.size() + 1;
+            final Label subPomodoro = new Label(String.format("[%2d]%s: ", todoNum, pomodoroName));
+            subPomodoro.setFont(new Font(18));
+            subPomodoro.setTextAlignment(TextAlignment.RIGHT);
+            HBox hbox = new HBox(subPomodoro, pomodoroProgIndicator, breakProgIndicator);
             hbox.setSpacing(5);
             hbox.setAlignment(Pos.CENTER);
             hbox.setPadding(new Insets(5,5,5,5));
+            hbox.setSpacing(20);
             pomodoroProgIndicator.getStyleClass().add("pomodoro-indicator");
             pomodoroProgIndicator.setPrefSize(100, 100);
             breakProgIndicator.getStyleClass().add("break-indicator");
             breakProgIndicator.setPrefSize(80, 100);
             breakProgIndicator.setPadding(new Insets(20, 0, 0, 0));
-            final Label subPomodoro = new Label(String.format("[%2d]%s: ", todoNum+1, pomodoroName));
-            subPomodoro.setFont(new Font(18));
-            subPomodoro.setTextAlignment(TextAlignment.RIGHT);
-            grid.add(subPomodoro, 0, todoNum);
-            grid.add(hbox, 1, todoNum);
-            ++todoNum;
-            hbox.setSpacing(20);
+            itemsHbox.add(hbox);
+
+            IntStream.range(0, todoNum).forEach(i -> {
+                HBox hbox_ = itemsHbox.get(todoNum-1-i);
+                hbox_.getStyleClass().add("sub-pom-stopped");
+                grid.add(hbox_,
+                        0, i);
+            });
+
             pomodoroTimeProg = new ScaleDoubleProperty(PomodoroTimeLength);
             breakTimeProg = new ScaleDoubleProperty(PomodoroBreakLength);
             pomodoroProgIndicator.progressProperty().bind(pomodoroTimeProg);
