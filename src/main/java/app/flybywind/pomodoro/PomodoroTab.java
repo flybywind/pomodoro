@@ -141,7 +141,8 @@ public class PomodoroTab extends BorderPane {
 
             IntStream.range(0, todoNum).forEach(i -> {
                 HBox hbox_ = itemsHbox.get(todoNum-1-i);
-                hbox_.getStyleClass().add("sub-pom-stopped");
+                if (i > 0)
+                    hbox_.getStyleClass().add("sub-pom-stopped");
                 grid.add(hbox_,
                         0, i);
             });

@@ -1,3 +1,6 @@
-.sub-pom-stopped > .label {
-    color: gray;
+.sub-pom-stopped .label {
+    -fx-text-fill: grey;
+}
+.sub-pom-stopped .label .text {
+    -fx-strikethrough: true;
 }
