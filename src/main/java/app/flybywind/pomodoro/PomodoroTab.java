@@ -1,5 +1,6 @@
 package app.flybywind.pomodoro;
 
+import app.flybywind.pomodoro.util.Util;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -29,7 +30,7 @@ import java.util.stream.IntStream;
  * 公用一个番茄map，因为一次只能有一个番茄在计时
  */
 public class PomodoroTab extends BorderPane {
-    final private Logger LOGGER = Logger.getLogger(PomodoroItem.class.getName());
+    final private Logger LOGGER = Util.getLogger(PomodoroItem.class);
     private String pomodoroName;
     final private Label commandLabel;
     final static private int PomodoroTimeLength = 60000/3; // 25分钟
@@ -123,7 +124,7 @@ public class PomodoroTab extends BorderPane {
         return pomodoroListPane;
     }
     class PomodoroItem {
-        private final Logger LOGGER = Logger.getLogger(PomodoroItem.class.getName());
+        private final Logger LOGGER = Util.getLogger(PomodoroItem.class);
         final ProgressIndicator pomodoroProgIndicator = new ProgressIndicator(0),
                 breakProgIndicator = new ProgressIndicator(0);
         ScaleDoubleProperty pomodoroTimeProg, breakTimeProg;

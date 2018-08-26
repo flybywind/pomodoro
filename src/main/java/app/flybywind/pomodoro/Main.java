@@ -6,11 +6,8 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-import java.util.logging.Logger;
-
 public class Main extends Application {
-    static private final Logger LOGGER = Logger.getLogger(Main.class.getName());
-    private static final String appCssUrl = Main.class.getResource("pom-style.css").toExternalForm();
+    private static final String appCssUrl;
     @Override
     public void start(Stage primaryStage) throws Exception{
         Parent root = FXMLLoader.load(getClass().getResource("main.fxml"));
@@ -24,6 +21,11 @@ public class Main extends Application {
     @Override
     public  void stop() {
         Controller.stop();
+    }
+    static {
+        String p = Main.class.getResource("logging.properties").getFile();
+        System.setProperty("java.util.logging.config.file", p);
+        appCssUrl = Main.class.getResource("pom-style.css").toExternalForm();
     }
     public static void main(String[] args) {
         launch(args);
