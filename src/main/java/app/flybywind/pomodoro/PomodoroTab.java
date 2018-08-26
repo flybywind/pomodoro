@@ -9,9 +9,7 @@ import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -38,14 +36,13 @@ public class PomodoroTab extends BorderPane {
     private Stack<PomodoroItem> todoItems = new Stack<>();
     private ComboBox dropDownCommand = new ComboBox();
     final private IntegerProperty isStoped = new SimpleIntegerProperty(0);
-
+    private boolean isKilled = false;
     final private List<HBox> itemsHbox = new ArrayList<>();
     public PomodoroTab(String name) {
         pomodoroName = name;
         commandLabel = new Label("操作");
         commandLabel.setFont(new Font(20));
         dropDownCommand.getItems().addAll("新建", "暂停", "重启", "结束");
-        dropDownCommand.getSelectionModel().select(0);
         dropDownCommand.setBorder(new Border(new BorderStroke(
                 Color.GRAY, BorderStrokeStyle.SOLID,null,
                 new BorderWidths(0, 0, 2, 0))));
@@ -74,37 +71,29 @@ public class PomodoroTab extends BorderPane {
         this.setTop(head);
         startOnePomodoro();
 
-        // todo: no effective
-        setOnKeyPressed(event -> {
-            // begin
-            if (event.getCode() == KeyCode.B) {
-                if (isStoped.get() > 1) {
-                    begin();
-                }
-            }
-            // end
-            if (event.getCode() == KeyCode.E) {
-                if (isStoped.get() <= 0) {
-                    end();
-                }
-            }
-
-            if (event.getCode() == KeyCode.K) {
-                kill();
-            }
-        });
     }
 
     public void end() {
-        LOGGER.info("set pom to end");
+        LOGGER.log(Level.FINEST, "set pom to end");
         isStoped.setValue(1);
     }
     public void begin() {
-        LOGGER.info("set pom to begin");
-        isStoped.setValue(0);
+        if (!isKilled) {
+            LOGGER.log(Level.FINEST, "set pom to begin");
+            this.requestFocus();
+            isStoped.setValue(0);
+        } else {
+            new Alert(Alert.AlertType.INFORMATION, "Pomodoro has killed.").showAndWait();
+//                    .ifPresent(resp -> {
+//                        if (resp == ButtonType.OK) {
+//                            formatSystem();
+//                        }
+//                    });
+        }
     }
     public void kill() {
         dropDownCommand.setDisable(true);
+        isKilled = true;
         end();
     }
     private void stopLastPomodoro() {

@@ -33,6 +33,6 @@
       </BorderPane>
    </top>
    <center>
-      <TabPane fx:id="pomodoroTabs" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER" />
+      <TabPane fx:id="pomodoroTabs" prefHeight="200.0" prefWidth="200.0" onKeyPressed="#onKeyPressed" BorderPane.alignment="CENTER" />
    </center>
 </BorderPane>

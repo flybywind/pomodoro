@@ -25,7 +25,7 @@ public class Controller implements Initializable{
     private TabPane pomodoroTabs;
     private Map<String, Tab> tabMap = new LinkedHashMap<>();
     private static Map<String, PomodoroTab> pomMap = new HashMap<>();
-
+    private PomodoroTab currentPom;
     static public void stop() {
         for (Map.Entry<String, PomodoroTab> e : pomMap.entrySet()) {
             e.getValue().end();
@@ -43,6 +43,7 @@ public class Controller implements Initializable{
                 }
                 if (newValue != null) {
                     (pomMap.get(newValue.getText())).begin();
+                    currentPom = pomMap.get(newValue.getText());
                 }
             } catch (Exception e) {
                 LOGGER.log(Level.WARNING, Util.getFullStackTrace(e));
@@ -51,43 +52,60 @@ public class Controller implements Initializable{
     }
     @FXML
     public void onKeyPressed(KeyEvent keyEvent) {
-       if (keyEvent.getCode() == KeyCode.ENTER && keyEvent.getSource().equals(todoInput)) {
-           final String pomodoroName = todoInput.getText();
-           LOGGER.log(Level.INFO, "enter pressed, create pomodoro: " + pomodoroName);
-           PomodoroTab pom = new PomodoroTab(pomodoroName);
-           Tab oldTab = tabMap.get(pomodoroName);
-           pomMap.put(pomodoroName, pom);
-           if (oldTab != null) {
-               oldTab.setContent(pom);
-               Iterator<Map.Entry<String, Tab>> iter = tabMap.entrySet().iterator();
-               int pos = Iterators.indexOf(iter, e -> e.getKey().equalsIgnoreCase(pomodoroName));
-               pomodoroTabs.getSelectionModel().select(pos);
-           } else {
-               Tab tab = new Tab(pomodoroName);
-               tab.setOnClosed(evt -> {
-                   Iterator<Map.Entry<String, Tab>> iter = tabMap.entrySet().iterator();
-                   int pos = Iterators.indexOf(iter, e -> e.getKey().equalsIgnoreCase(pomodoroName));
-                   tabMap.remove(pomodoroName);
-                   int sz = tabMap.size();
-                   if (pos < sz) {
-                       LOGGER.log(Level.FINEST, "open next tab");
-                       pomodoroTabs.getSelectionModel().select(pos);
-                   } else if (sz > 0){
-                       LOGGER.log(Level.FINEST, "open first tab");
-                       pomodoroTabs.getSelectionModel().select(0);
-                   } else {
-                       // all tabs closed, do nothing.
-                   }
-               });
-               LOGGER.info("create tab: " + tab);
-               tab.setContent(new ScrollPane(pom));
+        LOGGER.log(Level.FINEST, "key pressed from: " + keyEvent.getSource());
+        if ( keyEvent.getSource().equals(todoInput)) {
+            if (keyEvent.getCode() == KeyCode.ENTER) {
+                final String pomodoroName = todoInput.getText();
+                LOGGER.log(Level.INFO, "enter pressed, create pomodoro: " + pomodoroName);
+                PomodoroTab pom = new PomodoroTab(pomodoroName);
+                Tab oldTab = tabMap.get(pomodoroName);
+                pomMap.put(pomodoroName, pom);
+                currentPom = pom;
+                if (oldTab != null) {
+                    oldTab.setContent(pom);
+                    Iterator<Map.Entry<String, Tab>> iter = tabMap.entrySet().iterator();
+                    int pos = Iterators.indexOf(iter, e -> e.getKey().equalsIgnoreCase(pomodoroName));
+                    pomodoroTabs.getSelectionModel().select(pos);
+                } else {
+                    Tab tab = new Tab(pomodoroName);
+                    tab.setOnClosed(evt -> {
+                        Iterator<Map.Entry<String, Tab>> iter = tabMap.entrySet().iterator();
+                        int pos = Iterators.indexOf(iter, e -> e.getKey().equalsIgnoreCase(pomodoroName));
+                        tabMap.remove(pomodoroName);
+                        pomMap.remove(pomodoroName);
+                        int sz = tabMap.size();
+                        if (pos < sz) {
+                            LOGGER.log(Level.FINEST, "open next tab");
+                            pomodoroTabs.getSelectionModel().select(pos);
+                        } else if (sz > 0) {
+                            LOGGER.log(Level.FINEST, "open first tab");
+                            pomodoroTabs.getSelectionModel().select(0);
+                        } else {
+                            // all tabs closed, do nothing.
+                        }
+                    });
+                    LOGGER.info("create tab: " + tab);
+                    tab.setContent(new ScrollPane(pom));
 
-               int pos = tabMap.size();
-               tabMap.put(pomodoroName, tab);
-               pomodoroTabs.getTabs().add(tab);
-               pomodoroTabs.getSelectionModel().select(pos);
-           }
-       }
+                    int pos = tabMap.size();
+                    tabMap.put(pomodoroName, tab);
+                    pomodoroTabs.getTabs().add(tab);
+                    pomodoroTabs.getSelectionModel().select(pos);
+                }
+            }
+        } else if (keyEvent.getSource().equals(pomodoroTabs)) {
+            switch (keyEvent.getCode()) {
+                case B:
+                    currentPom.begin();
+                    break;
+                case E:
+                    currentPom.end();
+                    break;
+                case K:
+                    currentPom.kill();
+                    break;
+            }
+        }
 
     }
 }
