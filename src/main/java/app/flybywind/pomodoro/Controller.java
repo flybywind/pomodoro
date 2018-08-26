@@ -41,7 +41,9 @@ public class Controller implements Initializable{
                 if (oldValue != null) {
                     (pomMap.get(oldValue.getText())).end();
                 }
-                (pomMap.get(newValue.getText())).begin();
+                if (newValue != null) {
+                    (pomMap.get(newValue.getText())).begin();
+                }
             } catch (Exception e) {
                 LOGGER.log(Level.WARNING, Util.getFullStackTrace(e));
             }
@@ -67,9 +69,11 @@ public class Controller implements Initializable{
                    int pos = Iterators.indexOf(iter, e -> e.getKey().equalsIgnoreCase(pomodoroName));
                    tabMap.remove(pomodoroName);
                    int sz = tabMap.size();
-                   if (pos+1 < sz) {
-                       pomodoroTabs.getSelectionModel().select(pos+1);
+                   if (pos < sz) {
+                       LOGGER.log(Level.FINEST, "open next tab");
+                       pomodoroTabs.getSelectionModel().select(pos);
                    } else if (sz > 0){
+                       LOGGER.log(Level.FINEST, "open first tab");
                        pomodoroTabs.getSelectionModel().select(0);
                    } else {
                        // all tabs closed, do nothing.
