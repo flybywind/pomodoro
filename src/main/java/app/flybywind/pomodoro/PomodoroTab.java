@@ -1,5 +1,9 @@
 package app.flybywind.pomodoro;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
+import javafx.animation.TranslateTransition;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.geometry.Insets;
@@ -12,6 +16,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
+import javafx.util.Duration;
 
 import java.util.*;
 import java.util.logging.Level;
@@ -38,7 +43,7 @@ public class PomodoroTab extends BorderPane {
         pomodoroName = name;
         commandLabel = new Label("操作");
         commandLabel.setFont(new Font(20));
-        dropDownCommand.getItems().addAll("进行", "暂停", "重启", "结束");
+        dropDownCommand.getItems().addAll("新建", "暂停", "重启", "结束");
         dropDownCommand.getSelectionModel().select(0);
         dropDownCommand.setBorder(new Border(new BorderStroke(
                 Color.GRAY, BorderStrokeStyle.SOLID,null,
@@ -48,7 +53,10 @@ public class PomodoroTab extends BorderPane {
                 end();
             } else if (newValue.equals("结束")) {
                 kill();
-            } else if (newValue.equals("重启") || newValue.equals("进行")) {
+            } else if (newValue.equals("重启")) {
+                begin();
+            } else if (newValue.equals("新建")) {
+                end();
                 begin();
             }
         }));
@@ -127,25 +135,46 @@ public class PomodoroTab extends BorderPane {
             final Label subPomodoro = new Label(String.format("[%2d]%s: ", todoNum, pomodoroName));
             subPomodoro.setFont(new Font(18));
             subPomodoro.setTextAlignment(TextAlignment.RIGHT);
-            HBox hbox = new HBox(subPomodoro, pomodoroProgIndicator, breakProgIndicator);
-            hbox.setSpacing(5);
+            final HBox hbox = new HBox(subPomodoro, pomodoroProgIndicator, breakProgIndicator);
             hbox.setAlignment(Pos.CENTER);
             hbox.setPadding(new Insets(5,5,5,5));
             hbox.setSpacing(20);
             pomodoroProgIndicator.getStyleClass().add("pomodoro-indicator");
             pomodoroProgIndicator.setPrefSize(100, 100);
             breakProgIndicator.getStyleClass().add("break-indicator");
-            breakProgIndicator.setPrefSize(80, 100);
+            breakProgIndicator.setPrefSize(80, 80);
             breakProgIndicator.setPadding(new Insets(20, 0, 0, 0));
             itemsHbox.add(hbox);
-
-            IntStream.range(0, todoNum).forEach(i -> {
-                HBox hbox_ = itemsHbox.get(todoNum-1-i);
-                if (i > 0)
+            if (todoNum == 1) {
+                grid.add(hbox, 0, 0);
+            } else {
+                hbox.setOpacity(0);
+                hbox.setScaleX(0.1);
+                hbox.setScaleY(0.1);
+                grid.add(hbox, 0, 0);
+                // define animation
+                Duration newPomShowupDuration = Duration.seconds(0.5);
+                Timeline timeline = new Timeline();
+                timeline.getKeyFrames().add(
+                        new KeyFrame(newPomShowupDuration,
+                                new KeyValue(hbox.opacityProperty(), 1),
+                                new KeyValue(hbox.scaleXProperty(), 1),
+                                new KeyValue(hbox.scaleYProperty(), 1)));
+                GridPane subGrid = new GridPane();
+                IntStream.range(1, todoNum).forEach(i -> {
+                    HBox hbox_ = itemsHbox.get(todoNum-1-i);
                     hbox_.getStyleClass().add("sub-pom-stopped");
-                grid.add(hbox_,
-                        0, i);
-            });
+                    subGrid.add(hbox_,
+                            0, i-1);
+                });
+                grid.add(subGrid, 0, 1);
+                Duration subSlipDownDuration = Duration.seconds(0.5);
+                TranslateTransition translate = new TranslateTransition(subSlipDownDuration, subGrid);
+                translate.setFromY(-115);
+                translate.setToY(0);
+                timeline.play();
+                translate.play();
+            }
 
             pomodoroTimeProg = new ScaleDoubleProperty(PomodoroTimeLength);
             breakTimeProg = new ScaleDoubleProperty(PomodoroBreakLength);
@@ -155,7 +184,7 @@ public class PomodoroTab extends BorderPane {
             pomodoroTimer.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
-                    LOGGER.log(Level.INFO, "pomodoro = " + pomodoroTimeProg.doubleValue() + ", break = " + breakTimeProg);
+                    LOGGER.log(Level.FINEST, "pomodoro = " + pomodoroTimeProg.doubleValue() + ", break = " + breakTimeProg);
                     double pomVal =  pomodoroTimeProg.getRealValue();
                     if (pomVal + TimerInterval >= PomodoroTimeLength) {
                         pomodoroProgIndicator.progressProperty().unbind();

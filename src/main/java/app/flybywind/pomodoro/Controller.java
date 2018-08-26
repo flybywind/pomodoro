@@ -26,8 +26,13 @@ public class Controller implements Initializable{
     @FXML
     private TabPane pomodoroTabs;
     private Map<String, Pair<Integer, Tab>> tabMap = new HashMap<>();
-    private Map<String, PomodoroTab> pomMap = new HashMap<>();
+    private static Map<String, PomodoroTab> pomMap = new HashMap<>();
 
+    static public void stop() {
+        for (Map.Entry<String, PomodoroTab> e : pomMap.entrySet()) {
+            e.getValue().end();
+        }
+    }
     public void initialize(URL location, ResourceBundle resources) {
         LOGGER.log(Level.INFO, "Url = " + location + ", ResouceBundle = " + resources);
         todoInput.setText("todo1");
@@ -35,7 +40,9 @@ public class Controller implements Initializable{
             // end old tab timer and begin new one
             LOGGER.log(Level.INFO, "switch tab between [" + oldValue + "] and [" + newValue + "].");
             try {
-                (pomMap.get(oldValue.getText())).end();
+                if (oldValue != null) {
+                    (pomMap.get(oldValue.getText())).end();
+                }
                 (pomMap.get(newValue.getText())).begin();
             } catch (Exception e) {
                 LOGGER.log(Level.WARNING, Util.getFullStackTrace(e));
